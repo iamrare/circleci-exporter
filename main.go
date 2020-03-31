@@ -14,11 +14,21 @@ import (
 
 type collector struct{}
 
+const minutesBeforeCheck = 55 * time.Minute
+
+var (
+	d []Count
+	lastChecked time.Time
+)
+
 func (c collector) Describe(ch chan<- *prometheus.Desc) {
 }
 
 func (c collector) Collect(ch chan<- prometheus.Metric) {
-	d := CallAPI()
+	if len(d) == 0 || time.Now().After(lastChecked.Add(minutesBeforeCheck)) {
+		d = CallAPI()
+		lastChecked = time.Now()
+	}
 
 	for _, m := range d {
 		ch <- prometheus.MustNewConstMetric(
