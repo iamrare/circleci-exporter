@@ -82,11 +82,15 @@ func CallAPI() []Count {
 	}
 
 	c := []Count{}
+	now := time.Now()
+	start := now.AddDate(0, 0, -14)
+	for d := start; d.After(now) == false; d = d.AddDate(0, 0, 1) {
+		c = append(c, Count{d.Format("01-02-2006 Mon"), 0})
+	}
+
 	for _, m := range apiResponse.Items {
-		i := contains(c, m.CreatedAt.Format("01-02-2006"))
-		if i == -1 {
-			c = append(c, Count{m.CreatedAt.Format("01-02-2006"), 1})
-		} else {
+		i := contains(c, m.CreatedAt.Format("01-02-2006 Mon"))
+		if i != -1 {
 			c[i].Deploys = c[i].Deploys + 1
 		}
 	}
