@@ -9,7 +9,7 @@ WORKDIR /go/src/github.com/iamrare/circleci-exporter
 RUN go mod download \
     && CGO_ENABLED=0 GOOS=linux go build -o /bin/main
 
-FROM alpine:3.11.3
+FROM alpine:3.11.6
 
 RUN apk --no-cache add ca-certificates \
      && addgroup exporter \
