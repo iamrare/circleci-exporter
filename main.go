@@ -9,6 +9,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"strings"
 	"time"
 )
 
@@ -60,26 +61,6 @@ type Count struct {
 }
 
 func CallAPI() []Count {
-	url := os.Getenv("URL")
-	apiResponse := Response{}
-
-	req, _ := http.NewRequest("GET", url, nil)
-	token := "Basic " + os.Getenv("AUTH_TOKEN")
-	req.Header.Set("Authorization", token)
-
-	client := new(http.Client)
-	resp, _ := client.Do(req)
-
-	body, err := ioutil.ReadAll(resp.Body)
-	defer resp.Body.Close()
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	jsonErr := json.Unmarshal(body, &apiResponse)
-	if jsonErr != nil {
-		log.Fatal(jsonErr)
-	}
 
 	c := []Count{}
 	now := time.Now()
@@ -88,13 +69,36 @@ func CallAPI() []Count {
 		c = append(c, Count{d.Format("01-02-2006 Mon"), 0})
 	}
 
-	for _, m := range apiResponse.Items {
-		i := contains(c, m.CreatedAt.Format("01-02-2006 Mon"))
-		if i != -1 {
-			c[i].Deploys = c[i].Deploys + 1
+	urls := os.Getenv("URL")
+	if urls != "" {
+		for _, u := range strings.Split(urls, ", ") {
+			req, _ := http.NewRequest("GET", u, nil)
+			token := "Basic " + os.Getenv("AUTH_TOKEN")
+			req.Header.Set("Authorization", token)
+
+			client := new(http.Client)
+			resp, _ := client.Do(req)
+
+			body, err := ioutil.ReadAll(resp.Body)
+			defer resp.Body.Close()
+			if err != nil {
+				log.Fatal(err)
+			}
+
+			apiResponse := Response{}
+			jsonErr := json.Unmarshal(body, &apiResponse)
+			if jsonErr != nil {
+				log.Fatal(jsonErr)
+			}
+
+			for _, m := range apiResponse.Items {
+				i := contains(c, m.CreatedAt.Format("01-02-2006 Mon"))
+				if i != -1 {
+					c[i].Deploys = c[i].Deploys + 1
+				}
+			}
 		}
 	}
-
 	return c
 }
 
